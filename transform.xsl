@@ -8,11 +8,12 @@
 <!-- Transformation params-->
 
 <!--
-    Verbosity level:
-    0 (default) - output only rules' names
-    1 - output rules' names and descriptions
+    Rules' output verbosity level:
+    names (default) - output only rules' names
+    section - output rules' names within tables and rules' descriptions in seperate section
+    inline - output rules' names and descriptions within tables
 -->
-<xsl:param name="verbose">0</xsl:param>
+<xsl:param name="rules">names</xsl:param>
 
 <!-- Templates -->
 <xsl:template match="/">
@@ -74,6 +75,10 @@
         <xsl:call-template name="units">
             <xsl:with-param name="language" select="$language"/>
         </xsl:call-template>
+
+        <xsl:call-template name="rules-section">
+            <xsl:with-param name="language" select="$language"/>
+        </xsl:call-template>
     </body>
 </xsl:template>
 
@@ -117,15 +122,19 @@
 
 <xsl:template name="show-rules" match="rs:rules">
     <xsl:param name="language">PL</xsl:param>
+    <!-- Param for selecting verbosity level (overriding global rules variable) -->
+    <xsl:param name="verbosity"><xsl:value-of select="$rules"/></xsl:param>
 
     <xsl:choose>
-        <xsl:when test="$verbose &gt; 0">
+        <xsl:when test="$verbosity='inline'">
             <xsl:for-each select="rs:rule">
+                <xsl:sort select="@name"/>
                 <p><strong><xsl:value-of select="@name"/>: </strong> <xsl:value-of select="rs:description"/></p>
             </xsl:for-each>
         </xsl:when>
         <xsl:otherwise>
             <xsl:for-each select="rs:rule">
+                <xsl:sort select="@name"/>
                 <xsl:if test="position() &gt; 1"><xsl:text>, </xsl:text></xsl:if>
                 <xsl:value-of select="@name"/>
             </xsl:for-each>
@@ -212,7 +221,7 @@
                     <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$test-id]"/></td>
                     <td>
                         <xsl:choose>
-                            <xsl:when test="$verbose &gt; 0">
+                            <xsl:when test="$rules='inline'">
                                 <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$description-id]"/>
                             </xsl:when>
                             <xsl:otherwise><xsl:value-of select="@name"/><xsl:text>, </xsl:text></xsl:otherwise>
@@ -229,7 +238,7 @@
                         <td/>
                         <td>
                             <xsl:choose>
-                                <xsl:when test="$verbose &gt; 0">
+                                <xsl:when test="$rules='inline'">
                                     <strong><xsl:value-of select="rs:profiles/rs:profile/@name"/>: </strong>
                                     <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic"/>
                                 </xsl:when>
@@ -451,6 +460,19 @@
             </xsl:apply-templates>
         </td>
     </tr>
+</xsl:template>
+
+
+<xsl:template name="rules-section">
+    <xsl:param name="language">PL</xsl:param>
+
+    <xsl:if test="$rules='section'">
+        <hr/>
+        <xsl:apply-templates select="//rs:rules">
+            <xsl:with-param name="language" select="$language"/>
+            <xsl:with-param name="verbosity" select="'inline'"/>
+        </xsl:apply-templates>
+    </xsl:if>
 </xsl:template>
 
 </xsl:stylesheet>
