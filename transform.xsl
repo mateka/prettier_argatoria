@@ -207,6 +207,7 @@
         </xsl:variable>
 
         <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
+            <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id | @name"/>
             <xsl:if test="rs:categories/rs:category[@entryId=$hero-category-id]">
                 <xsl:variable name='upgrades-count' select="count(rs:selections/rs:selection[@type='upgrade']) + 1" />
                 <tr>
@@ -326,6 +327,7 @@
                 </xsl:choose>
             </center></small></td></tr>
             <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
+                <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id"/>
                 <xsl:if test="rs:categories/rs:category[@entryId=$basic-units-category-id]">
                     <xsl:call-template name="unit">
                         <xsl:with-param name="language" select="$language"/>
@@ -340,6 +342,7 @@
                 </xsl:choose>
             </center></small></td></tr>
             <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
+                <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id"/>
                 <xsl:if test="rs:categories/rs:category[@entryId=$elite-units-category-id]">
                     <xsl:call-template name="unit">
                         <xsl:with-param name="language" select="$language"/>
@@ -354,6 +357,7 @@
                 </xsl:choose>
             </center></small></td></tr>
             <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
+                <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id"/>
                 <xsl:if test="rs:categories/rs:category[@entryId=$rare-units-category-id]">
                     <xsl:call-template name="unit">
                         <xsl:with-param name="language" select="$language"/>
@@ -368,6 +372,7 @@
                 </xsl:choose>
             </center></small></td></tr>
             <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
+                <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id"/>
                 <xsl:if test="rs:categories/rs:category[@entryId=$uniqe-units-category-id]">
                     <xsl:call-template name="unit">
                         <xsl:with-param name="language" select="$language"/>
