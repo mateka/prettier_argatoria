@@ -13,7 +13,7 @@
     section - output rules' names within tables and rules' descriptions in seperate section
     inline - output rules' names and descriptions within tables
 -->
-<xsl:param name="rules">names</xsl:param>
+<xsl:param name="rules">inline</xsl:param>
 
 <!-- Templates -->
 <xsl:template match="/">
@@ -38,6 +38,21 @@
             <xsl:with-param name="roster-name" select="$roster-name"/>
         </xsl:call-template>
     </html>
+</xsl:template>
+
+
+<xsl:template name="show-description" match="rs:description">
+    <xsl:param name="text" select="."/>
+    <!-- Because we would rely on $text containing a line break when using 
+        substring-before($text,'&#10;') and the last line might not have a
+        trailing line break, we append one before doing substring-before().  -->
+    <xsl:value-of select="substring-before(concat($text,'&#10;'),'&#10;')"/>
+    <br/>
+    <xsl:if test="contains($text,'&#10;')">
+      <xsl:apply-templates select=".">
+        <xsl:with-param name="text" select="substring-after($text,'&#10;')"/>
+      </xsl:apply-templates>
+    </xsl:if>
 </xsl:template>
 
 
@@ -112,6 +127,11 @@
         </small>
     </h2>
 
+    <!-- Output general -->
+    <xsl:call-template name="general">
+        <xsl:with-param name="language" select="$language"/>
+    </xsl:call-template>
+
     <!-- Output global rules -->
     <xsl:apply-templates select="/rs:roster/rs:forces/rs:force/rs:rules">
         <xsl:with-param name="language" select="$language"/>
@@ -129,7 +149,7 @@
         <xsl:when test="$verbosity='inline'">
             <xsl:for-each select="rs:rule">
                 <xsl:sort select="@name"/>
-                <p><strong><xsl:value-of select="@name"/>: </strong> <xsl:value-of select="rs:description"/></p>
+                <p><strong><xsl:value-of select="@name"/>: </strong> <xsl:apply-templates select="rs:description"/></p>
             </xsl:for-each>
         </xsl:when>
         <xsl:otherwise>
@@ -140,6 +160,83 @@
             </xsl:for-each>
         </xsl:otherwise>
     </xsl:choose>
+</xsl:template>
+
+
+<xsl:template name="general">
+    <xsl:param name="language">PL</xsl:param>
+
+    <xsl:variable name='general-category-id'>
+        <xsl:choose>
+            <xsl:when test="$language='EN'">fd54-99b9-43d4-55db</xsl:when>
+            <xsl:otherwise>76f5-58f8-04aa-1914</xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <xsl:variable name='ld-id'>
+        <xsl:choose>
+            <xsl:when test="$language='EN'">6103-ad18-a530-9636</xsl:when>
+            <xsl:otherwise>cac3-aea3-a917-6b13</xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <xsl:variable name='description-id'>
+        <xsl:choose>
+            <xsl:when test="$language='EN'">80c5-70a3-dda4-71fe</xsl:when>
+            <xsl:otherwise>d023-e767-bbca-ad83</xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+
+    <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
+        <xsl:if test="rs:categories/rs:category[@entryId=$general-category-id]">
+            <h3>
+                <xsl:value-of select="@name"/>
+                (LD: <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$ld-id]"/>
+                    <xsl:text> </xsl:text>
+                    <small>
+                        <xsl:choose>
+                            <xsl:when test="$language='EN'">Cost</xsl:when>
+                            <xsl:otherwise>Koszt</xsl:otherwise>
+                        </xsl:choose>
+                        <xsl:text>: </xsl:text>
+                        <xsl:value-of select="round(rs:costs/rs:cost/@value)"/>
+                    </small>)</h3>
+
+            <xsl:for-each select="rs:selections/rs:selection[@type='upgrade']">
+                <p>
+                    <xsl:choose>
+                        <xsl:when test="$rules='inline'">
+                            <strong><xsl:value-of select="rs:profiles/rs:profile/@name"/>: </strong>
+                            <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic"/>
+                        </xsl:when>
+                        <xsl:otherwise><xsl:value-of select="rs:profiles/rs:profile/@name"/></xsl:otherwise>
+                    </xsl:choose>
+                    <xsl:text> </xsl:text>
+                    <small>
+                        <xsl:text>(</xsl:text>
+                        <xsl:choose>
+                            <xsl:when test="$language='EN'">Cost</xsl:when>
+                            <xsl:otherwise>Koszt</xsl:otherwise>
+                        </xsl:choose>
+                        <xsl:text>: </xsl:text>
+                        <xsl:value-of select="round(rs:costs/rs:cost/@value)"/>
+                        <xsl:text>)</xsl:text>
+                    </small>
+                </p>
+            </xsl:for-each>
+
+            <p>
+                <xsl:choose>
+                    <xsl:when test="$rules='inline'">
+                        <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$description-id]"/>
+                    </xsl:when>
+                    <xsl:otherwise><xsl:value-of select="@name"/><xsl:text>, </xsl:text></xsl:otherwise>
+                </xsl:choose>
+                <xsl:apply-templates select="rs:rules">
+                    <xsl:with-param name="language" select="$language"/>
+                </xsl:apply-templates>
+            </p>
+        </xsl:if>
+    </xsl:for-each>
+    <hr/>
 </xsl:template>
 
 
@@ -166,7 +263,6 @@
                     <xsl:otherwise>Koszt</xsl:otherwise>
                 </xsl:choose>
             </th>
-            <th>LD</th>
             <th>
                 <xsl:choose>
                     <xsl:when test="$language='EN'">Test</xsl:when>
@@ -187,10 +283,10 @@
                 <xsl:otherwise>982d-e25e-9a7a-d639</xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
-        <xsl:variable name='ld-id'>
+        <xsl:variable name='general-category-id'>
             <xsl:choose>
-                <xsl:when test="$language='EN'">6103-ad18-a530-9636</xsl:when>
-                <xsl:otherwise>cac3-aea3-a917-6b13</xsl:otherwise>
+                <xsl:when test="$language='EN'">fd54-99b9-43d4-55db</xsl:when>
+                <xsl:otherwise>76f5-58f8-04aa-1914</xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
         <xsl:variable name='test-id'>
@@ -209,45 +305,45 @@
         <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
             <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id | @name"/>
             <xsl:if test="rs:categories/rs:category[@entryId=$hero-category-id]">
-                <xsl:variable name='upgrades-count' select="count(rs:selections/rs:selection[@type='upgrade']) + 1" />
-                <tr>
-                    <td>
-                        <xsl:attribute name="rowspan">
-                            <xsl:value-of select="$upgrades-count"/>
-                        </xsl:attribute>
-                        <strong><xsl:value-of select="@name"/></strong>
-                    </td>
-                    <td><xsl:value-of select="round(rs:costs/rs:cost/@value)"/></td>
-                    <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$ld-id]"/></td>
-                    <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$test-id]"/></td>
-                    <td>
-                        <xsl:choose>
-                            <xsl:when test="$rules='inline'">
-                                <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$description-id]"/>
-                            </xsl:when>
-                            <xsl:otherwise><xsl:value-of select="@name"/><xsl:text>, </xsl:text></xsl:otherwise>
-                        </xsl:choose>
-                        <xsl:apply-templates select="rs:rules">
-                            <xsl:with-param name="language" select="$language"/>
-                        </xsl:apply-templates>
-                    </td>
-                </tr>
-                <xsl:for-each select="rs:selections/rs:selection[@type='upgrade']">
+                <xsl:if test="not(rs:categories/rs:category[@entryId=$general-category-id])">
+                    <xsl:variable name='upgrades-count' select="count(rs:selections/rs:selection[@type='upgrade']) + 1" />
                     <tr>
+                        <td>
+                            <xsl:attribute name="rowspan">
+                                <xsl:value-of select="$upgrades-count"/>
+                            </xsl:attribute>
+                            <strong><xsl:value-of select="@name"/></strong>
+                        </td>
                         <td><xsl:value-of select="round(rs:costs/rs:cost/@value)"/></td>
-                        <td/>
-                        <td/>
+                        <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$test-id]"/></td>
                         <td>
                             <xsl:choose>
                                 <xsl:when test="$rules='inline'">
-                                    <strong><xsl:value-of select="rs:profiles/rs:profile/@name"/>: </strong>
-                                    <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic"/>
+                                    <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$description-id]"/>
                                 </xsl:when>
-                                <xsl:otherwise><xsl:value-of select="rs:profiles/rs:profile/@name"/></xsl:otherwise>
+                                <xsl:otherwise><xsl:value-of select="@name"/><xsl:text>, </xsl:text></xsl:otherwise>
                             </xsl:choose>
+                            <xsl:apply-templates select="rs:rules">
+                                <xsl:with-param name="language" select="$language"/>
+                            </xsl:apply-templates>
                         </td>
                     </tr>
-                </xsl:for-each>
+                    <xsl:for-each select="rs:selections/rs:selection[@type='upgrade']">
+                        <tr>
+                            <td><xsl:value-of select="round(rs:costs/rs:cost/@value)"/></td>
+                            <td/>
+                            <td>
+                                <xsl:choose>
+                                    <xsl:when test="$rules='inline'">
+                                        <strong><xsl:value-of select="rs:profiles/rs:profile/@name"/>: </strong>
+                                        <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic"/>
+                                    </xsl:when>
+                                    <xsl:otherwise><xsl:value-of select="rs:profiles/rs:profile/@name"/></xsl:otherwise>
+                                </xsl:choose>
+                            </td>
+                        </tr>
+                    </xsl:for-each>
+                </xsl:if>
             </xsl:if>
         </xsl:for-each>
     </table>
@@ -290,42 +386,7 @@
     </xsl:variable>
 
     <table class="table table-bordered table-hover table-condensed">
-        <thead>
-            <tr>
-                <th>
-                    <xsl:choose>
-                        <xsl:when test="$language='EN'">Name</xsl:when>
-                        <xsl:otherwise>Nazwa</xsl:otherwise>
-                    </xsl:choose>
-                </th>
-                <th>
-                    <xsl:choose>
-                        <xsl:when test="$language='EN'">Count</xsl:when>
-                        <xsl:otherwise>Liczba</xsl:otherwise>
-                    </xsl:choose>
-                </th>
-                <th>
-                    <xsl:choose>
-                        <xsl:when test="$language='EN'">Cost</xsl:when>
-                        <xsl:otherwise>Koszt</xsl:otherwise>
-                    </xsl:choose>
-                </th>
-                <th>LD</th>
-                <th>M</th>
-                <th>WS</th>
-                <th>S</th>
-                <th>T</th>
-                <th>A</th>
-                <th>W</th>
-            </tr>
-        </thead>
         <tbody>
-            <tr><td colspan="100"><small><center>
-                <xsl:choose>
-                    <xsl:when test="$language='EN'">Basic units</xsl:when>
-                    <xsl:otherwise>Oddziały Podstawowe</xsl:otherwise>
-                </xsl:choose>
-            </center></small></td></tr>
             <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
                 <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id"/>
                 <xsl:if test="rs:categories/rs:category[@entryId=$basic-units-category-id]">
@@ -335,12 +396,6 @@
                 </xsl:if>
             </xsl:for-each>
 
-            <tr><td colspan="100"><small><center>
-                <xsl:choose>
-                    <xsl:when test="$language='EN'">Elite units</xsl:when>
-                    <xsl:otherwise>Oddziały Elitarne</xsl:otherwise>
-                </xsl:choose>
-            </center></small></td></tr>
             <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
                 <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id"/>
                 <xsl:if test="rs:categories/rs:category[@entryId=$elite-units-category-id]">
@@ -350,12 +405,6 @@
                 </xsl:if>
             </xsl:for-each>
 
-            <tr><td colspan="100"><small><center>
-                <xsl:choose>
-                    <xsl:when test="$language='EN'">Rare units</xsl:when>
-                    <xsl:otherwise>Oddziały Rzadkie</xsl:otherwise>
-                </xsl:choose>
-            </center></small></td></tr>
             <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
                 <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id"/>
                 <xsl:if test="rs:categories/rs:category[@entryId=$rare-units-category-id]">
@@ -365,12 +414,6 @@
                 </xsl:if>
             </xsl:for-each>
 
-            <tr><td colspan="100"><small><center>
-                <xsl:choose>
-                    <xsl:when test="$language='EN'">Uniqe units</xsl:when>
-                    <xsl:otherwise>Oddziały Unikalne</xsl:otherwise>
-                </xsl:choose>
-            </center></small></td></tr>
             <xsl:for-each select="/rs:roster/rs:forces/rs:force/rs:selections/rs:selection">
                 <xsl:sort select="rs:selections/rs:selection/rs:profiles/rs:profile/@id | rs:profiles/rs:profile/@id"/>
                 <xsl:if test="rs:categories/rs:category[@entryId=$uniqe-units-category-id]">
@@ -448,15 +491,29 @@
 
     <tr>
         <td rowspan="2"><strong><xsl:value-of select="@name"/></strong></td>
-        <td><xsl:value-of select="@number"/></td>
-        <td><xsl:value-of select="round(rs:costs/rs:cost/@value)"/></td>
-        <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$ld-id]"/></td>
-        <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$m-id]"/></td>
-        <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$ws-id]"/></td>
-        <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$s-id]"/></td>
-        <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$t-id]"/></td>
-        <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$a-id]"/></td>
-        <td><xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$w-id]"/></td>
+        <td>
+            <xsl:choose>
+                <xsl:when test="$language='EN'">Count</xsl:when>
+                <xsl:otherwise>Liczba</xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>: </xsl:text>
+            <xsl:value-of select="@number"/>
+        </td>
+        <td>
+            <xsl:choose>
+                <xsl:when test="$language='EN'">Cost</xsl:when>
+                <xsl:otherwise>Koszt</xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>: </xsl:text>
+            <xsl:value-of select="round(rs:costs/rs:cost/@value)"/>
+        </td>
+        <td><strong>LD: <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$ld-id]"/></strong></td>
+        <td><strong>M: <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$m-id]"/></strong></td>
+        <td><strong>WS: <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$ws-id]"/></strong></td>
+        <td><strong>S: <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$s-id]"/></strong></td>
+        <td><strong>T: <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$t-id]"/></strong></td>
+        <td><strong>A: <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$a-id]"/></strong></td>
+        <td><strong>W: <xsl:value-of select="rs:profiles/rs:profile/rs:characteristics/rs:characteristic[@typeId=$w-id]"/></strong></td>
     </tr>
     <tr>
         <td colspan="100">
