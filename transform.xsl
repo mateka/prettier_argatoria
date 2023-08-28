@@ -9,9 +9,9 @@
 
 <!--
     Rules' output verbosity level:
-    names (default) - output only rules' names
-    section - output rules' names within tables and rules' descriptions in seperate section
-    inline - output rules' names and descriptions within tables
+    names - output only rules' names
+    section - output rules' names within tables and rules' descriptions in a separate section
+    inline (default) - output rules' names and descriptions within tables
 -->
 <xsl:param name="rules">inline</xsl:param>
 
