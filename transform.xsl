@@ -392,6 +392,7 @@
                 <xsl:if test="rs:categories/rs:category[@entryId=$basic-units-category-id]">
                     <xsl:call-template name="unit">
                         <xsl:with-param name="language" select="$language"/>
+                        <xsl:with-param name="category" select="1"/>
                     </xsl:call-template>
                 </xsl:if>
             </xsl:for-each>
@@ -401,6 +402,7 @@
                 <xsl:if test="rs:categories/rs:category[@entryId=$elite-units-category-id]">
                     <xsl:call-template name="unit">
                         <xsl:with-param name="language" select="$language"/>
+                        <xsl:with-param name="category" select="2"/>
                     </xsl:call-template>
                 </xsl:if>
             </xsl:for-each>
@@ -410,6 +412,7 @@
                 <xsl:if test="rs:categories/rs:category[@entryId=$rare-units-category-id]">
                     <xsl:call-template name="unit">
                         <xsl:with-param name="language" select="$language"/>
+                        <xsl:with-param name="category" select="3"/>
                     </xsl:call-template>
                 </xsl:if>
             </xsl:for-each>
@@ -419,6 +422,7 @@
                 <xsl:if test="rs:categories/rs:category[@entryId=$uniqe-units-category-id]">
                     <xsl:call-template name="unit">
                         <xsl:with-param name="language" select="$language"/>
+                        <xsl:with-param name="category" select="4"/>
                     </xsl:call-template>
                 </xsl:if>
             </xsl:for-each>
@@ -428,16 +432,19 @@
 
 <xsl:template name="unit">
     <xsl:param name="language">PL</xsl:param>
+    <xsl:param name="category">0</xsl:param>
 
     <xsl:choose>
         <xsl:when test="@type='model'">
             <xsl:apply-templates select=".">
                 <xsl:with-param name="language" select="$language"/>
+                <xsl:with-param name="category" select="$category"/>
             </xsl:apply-templates>
         </xsl:when>
         <xsl:otherwise>
             <xsl:apply-templates select="rs:selections/rs:selection">
                 <xsl:with-param name="language" select="$language"/>
+                <xsl:with-param name="category" select="$category"/>
             </xsl:apply-templates>
         </xsl:otherwise>
     </xsl:choose>
@@ -445,6 +452,7 @@
 
 <xsl:template name="unit-data" match="rs:selection">
     <xsl:param name="language">PL</xsl:param>
+    <xsl:param name="category">0</xsl:param>
 
     <xsl:variable name='ld-id'>
         <xsl:choose>
@@ -488,9 +496,35 @@
             <xsl:otherwise>1aef-9fb8-6d60-bcdb</xsl:otherwise>
         </xsl:choose>
     </xsl:variable>
+    <xsl:variable name='category-name'>
+        <xsl:choose>
+            <xsl:when test="$language='EN'">
+                <xsl:choose>
+                    <xsl:when test="$category='1'">Basic</xsl:when>
+                    <xsl:when test="$category='2'">Elite</xsl:when>
+                    <xsl:when test="$category='3'">Rare</xsl:when>
+                    <xsl:when test="$category='4'">Unique</xsl:when>
+                    <xsl:otherwise>ERROR</xsl:otherwise>
+                </xsl:choose>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:choose>
+                    <xsl:when test="$category='1'">Podstawowe</xsl:when>
+                    <xsl:when test="$category='2'">Elitarne</xsl:when>
+                    <xsl:when test="$category='3'">Rzadkie</xsl:when>
+                    <xsl:when test="$category='4'">Unikatowe</xsl:when>
+                    <xsl:otherwise>ERROR</xsl:otherwise>
+                </xsl:choose>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
 
     <tr>
-        <td rowspan="2"><strong><xsl:value-of select="@name"/></strong></td>
+        <td rowspan="2">
+            <strong><xsl:value-of select="@name"/></strong>
+            <br/>
+            <small><xsl:value-of select="$category-name"/></small>
+        </td>
         <td>
             <xsl:choose>
                 <xsl:when test="$language='EN'">Count</xsl:when>
